@@ -1,0 +1,204 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI Study Planner.\n\nCreate a personalized study plan using ONLY the information provided by the user.\n\nUser Goal:\n{{ $json[\"What do you want to learn?\"] }}\n\nDays Available:\n{{ $json[\"How many days do you have?\"] }}\n\nHours Per Day:\n{{ $json[\"Hours per day\"] }}\n\nCurrent Level:\n{{ $json[\"Current Level\"] }}\n\nPurpose:\n{{ $json[\"What is your purpose?\"] }}\n\nInstructions:\n\n1. Use the exact topic provided by the user.\n2. Never invent, replace, or assume a different topic.\n3. Use exactly the number of days provided.\n4. Use exactly the hours per day provided.\n5. Calculate total study hours using:\n   days × hours per day.\n6. Create a day-wise study plan for every day.\n7. For each day include:\n   - Topics to learn\n   - Practical task\n   - One interview question\n8. Adapt the difficulty to the user's current level.\n9. Adapt the plan to the user's purpose.\n10. If the user says Java, the plan must be about Java.\n11. If the user says Java OOP, the plan must be about Java OOP.\n12. Do not generate Python, SQL, React, or any unrelated topic unless the user explicitly requests it.\n13. Do not use sample data.\n14. Return only the final study plan.\n\nFormat:\n\n# Personalized Study Plan\n\nGoal: [user goal]\nDuration: [days] days\nDaily Time: [hours] hours\nTotal Study Time: [calculated total] hours\nLevel: [level]\nPurpose: [purpose]\n\n## Day 1\n- Topics:\n- Practical Task:\n- Interview Question:\n\n## Day 2\n- Topics:\n- Practical Task:\n- Interview Question:\n\nContinue until the exact number of days provided by the user.\nFor any arithmetic calculation, especially total study hours,\nALWAYS use the Calculator tool.\n\nCalculate:\nDays × Hours per day\n\nDo not calculate this yourself.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "782e0793-ef91-49c5-a1bb-560cc605d613",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        96,
+        208
+      ],
+      "id": "2d73d226-77ba-45a8-ae7d-b7316caf6338",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "cvsMX7eMOOTsJFLc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=study-planner-form"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        240,
+        208
+      ],
+      "id": "86aa898e-171c-4d1d-a17c-2e6ff6fe6926",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        384,
+        208
+      ],
+      "id": "816a261e-4e4c-4438-81aa-a0e745db00f8",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "formTitle": "AI STUDY PLANNER",
+        "formDescription": "Create a personalized study plan with AI based on your goal, time, and experience level.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "What do you want to learn?"
+            },
+            {
+              "fieldLabel": "How many days do you have?",
+              "fieldType": "number"
+            },
+            {
+              "fieldLabel": "Hours per day",
+              "fieldType": "number"
+            },
+            {
+              "fieldLabel": "Current Level",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Beginner"
+                  },
+                  {
+                    "option": "Intermediate"
+                  },
+                  {
+                    "option": "Advanced"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "What is your purpose?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a4e6fcfa-e441-4f47-b27a-51a7be4805b9",
+      "name": "On form submission",
+      "webhookId": "5b97652c-9948-4899-867f-73609c91c4db"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Your AI Study Plan is Ready! ",
+        "completionMessage": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        592,
+        0
+      ],
+      "id": "cf9df604-e0d0-4124-9c57-2b9d62f42aa1",
+      "name": "Form",
+      "webhookId": "02eb0972-1f2d-4c70-bfba-889e697a9bf5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "89b9d433-db30-4f31-b46e-38fc1d3c62eb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "120986da030daf600ffa9dd05d0935281326d3c30f62a4b4965f989daec56eb4"
+  },
+  "nodeGroups": [],
+  "id": "JLkrBu8EFAHwYeBN",
+  "tags": []
+}
