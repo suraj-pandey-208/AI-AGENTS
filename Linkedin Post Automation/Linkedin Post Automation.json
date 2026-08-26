@@ -1,0 +1,374 @@
+{
+  "name": "Linkedin Post Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 11
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        32,
+        96
+      ],
+      "id": "36734c88-b9d7-4da9-a6de-0827436bed10",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1leTSW8I1vsaweZkbZAk2ep_4l2UN1JW7L-jYarIN6KA",
+          "mode": "list",
+          "cachedResultName": "Linkedin automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1leTSW8I1vsaweZkbZAk2ep_4l2UN1JW7L-jYarIN6KA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1566335527,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1leTSW8I1vsaweZkbZAk2ep_4l2UN1JW7L-jYarIN6KA/edit#gid=1566335527"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "Not Done"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        96
+      ],
+      "id": "099f4b0c-e7bd-4c5e-9769-d4f351eea28d",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dCcHFrfMcFmVjlge",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        352,
+        -32
+      ],
+      "id": "a6b78e60-1a89-4ed6-95cc-cbb53b96801e",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json[\"Post Title\"] }}\n{{ $json[\"Hook Line (Scroll-Stopper)\"] }}",
+        "options": {
+          "systemMessage": "=You are a highly engaging LinkedIn content creator and copywriter for an educational brand named \"ABES Applied Innovation Cell\" Your task is to transform the provided topic information into a compelling, professional, and educational LinkedIn post that encourages course enrollment.\n\nRULES:\n1.  The entire post content must be strictly under 150 words.\n2.  The post must include 2-3 relevant hashtags.\nToday's Date for latest reference: {{ $now }}\nYour output should be nothing else but the post itself, as it will be directly posted. \nNo “Here is your post” allowed. \n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        480,
+        -48
+      ],
+      "id": "3fe2f7c6-c67a-4f50-add7-0088931927d2",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        496,
+        160
+      ],
+      "id": "39b6fa3e-e9ad-4685-9607-9a0d33633d5f",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zPGtuiBZv3Jy42Hv",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-image-1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-IMAGE-1-MINI"
+        },
+        "prompt": "=\nCreate an Image on this topic But Don't use any text in the image.\nTopic:\n {{ $json.output }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        -64
+      ],
+      "id": "d9d70a03-eb76-4293-9691-f91d5d5ab1c9",
+      "name": "Generate an image",
+      "credentials": {
+        "openAiApi": {
+          "id": "S8orfDsYfLfzFVRf",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        832,
+        192
+      ],
+      "id": "25948d9c-0abe-4b16-9a5d-53a27a1af8e6",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "person": "LYNvPloSbL",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "shareMediaCategory": "IMAGE",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        992,
+        176
+      ],
+      "id": "b9d1ad8d-2369-4b86-9e2f-5337092c54d6",
+      "name": "Create a post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "6GAEAmqTlSIAHioi",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1leTSW8I1vsaweZkbZAk2ep_4l2UN1JW7L-jYarIN6KA",
+          "mode": "list",
+          "cachedResultName": "Linkedin automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1leTSW8I1vsaweZkbZAk2ep_4l2UN1JW7L-jYarIN6KA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1566335527,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1leTSW8I1vsaweZkbZAk2ep_4l2UN1JW7L-jYarIN6KA/edit#gid=1566335527"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Post Title": "={{ $('Limit').item.json['Post Title'] }}",
+            "Status": "Done"
+          },
+          "matchingColumns": [
+            "Post Title"
+          ],
+          "schema": [
+            {
+              "id": "Post Title",
+              "displayName": "Post Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hook Line (Scroll-Stopper)",
+              "displayName": "Hook Line (Scroll-Stopper)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1136,
+        -16
+      ],
+      "id": "be569607-19e9-4253-ae5d-2bd5cef502ea",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dCcHFrfMcFmVjlge",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a post": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a414e695-6910-4a02-9fdf-c6921961fef0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "120986da030daf600ffa9dd05d0935281326d3c30f62a4b4965f989daec56eb4"
+  },
+  "nodeGroups": [],
+  "id": "ttDY8rQUoDF5G4Mm",
+  "tags": []
+}

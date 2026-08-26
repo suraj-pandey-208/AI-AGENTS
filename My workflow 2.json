@@ -1,0 +1,587 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "03039b26-a3bd-46b6-9387-aaae5fa426af",
+      "name": "Telegram Trigger",
+      "webhookId": "ca999244-0c71-4962-8e9c-c68dac4d4b30",
+      "credentials": {
+        "telegramApi": {
+          "id": "GX1BThwlq9SMWpk4",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an AI Task Scheduler.\n\nYour job is to read the user's Telegram message and extract EVERY task the user wants to schedule.\n\nFor each task, identify:\n- title\n- date\n- time\n\nThe user can provide any number of tasks. Never limit the user to 3 tasks.\n\nHandle natural language such as:\n- today\n- tomorrow\n- day after tomorrow\n- Monday\n- next Friday\n- in 2 hours\n- in 10 minutes\n- after 30 minutes\n- at 7 PM\n- tomorrow morning\n- tonight at 11 PM\n\nConvert dates into YYYY-MM-DD format.\nConvert times into 24-hour HH:MM format.\n\nCURRENT DATE:\n{{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd') }}\n\nCURRENT TIME:\n{{ $now.setZone('Asia/Kolkata').toFormat('HH:mm') }}\n\nCURRENT DATE AND TIME:\n{{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd HH:mm') }}\n\nIMPORTANT:\nThe above current date and time are the ONLY source of truth for the current date and time.\n\nDATE RULES:\n- \"today\" = current date\n- \"tomorrow\" = current date + 1 day\n- \"day after tomorrow\" = current date + 2 days\n- For a weekday, calculate the next occurrence of that weekday.\n- For \"next Friday\", calculate the upcoming Friday according to the current date.\n- Never use a date from any JSON example as today's date.\n- Never assume a date from the user's message is today's date unless explicitly stated.\n\nTIME RULES:\n- Convert AM/PM to 24-hour format.\n- \"9 PM\" = \"21:00\"\n- \"9 AM\" = \"09:00\"\n\nRELATIVE TIME RULES:\n- \"in 10 minutes\" means CURRENT TIME + 10 minutes.\n- \"in 30 minutes\" means CURRENT TIME + 30 minutes.\n- \"in 1 hour\" means CURRENT TIME + 1 hour.\n- \"in 2 hours\" means CURRENT TIME + 2 hours.\n- \"after 20 minutes\" means CURRENT TIME + 20 minutes.\n- \"after 2 hours\" means CURRENT TIME + 2 hours.\n- When calculating relative time, use the CURRENT DATE AND TIME provided above.\n- If adding minutes/hours crosses midnight, also change the date accordingly.\n- NEVER guess or invent a relative time.\n- NEVER use a time from an example task as the current time.\n\nEXAMPLES:\n\nIf current date/time is:\n2026-08-22 01:40\n\nUser:\n\"Mujhe 3 minute baad DSA padhna yaad dilana.\"\n\nOutput:\ntitle = \"DSA padhna\"\ndate = \"2026-08-22\"\ntime = \"01:43\"\n\nIf current date/time is:\n2026-08-22 23:59\n\nUser:\n\"Mujhe 2 minute baad DSA padhna yaad dilana.\"\n\nOutput:\ntitle = \"DSA padhna\"\ndate = \"2026-08-23\"\ntime = \"00:01\"\n\nIf user says:\n\"Mujhe kal 9 PM par Java padhna yaad dilana.\"\n\nOutput:\ntitle = \"Java padhna\"\ndate = tomorrow's date\ntime = \"21:00\"\n\nIf the user gives an exact time, use that exact time.\nIf the user gives a relative time, calculate it from the CURRENT DATE AND TIME above.\n\nDo not invent a time if the user did not provide enough information.\n\nReturn ALL extracted tasks using the required structured output format.\n\nDo not combine separate tasks into one task.\nDo not create tasks that the user did not request."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "07d9589a-ba45-414d-a0da-7f1ea40d784b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        80,
+        208
+      ],
+      "id": "20262143-7da6-40d1-b49a-d22d0ecf4fb9",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zPGtuiBZv3Jy42Hv",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"tasks\": [\n    {\n      \"title\": \"Study DBMS\",\n      \"date\": \"2026-08-22\",\n      \"time\": \"09:00\"\n    },\n    {\n      \"title\": \"DSA\",\n      \"date\": \"2026-08-22\",\n      \"time\": \"10:00\"\n    },\n    {\n      \"title\": \"Java\",\n      \"date\": \"2026-08-22\",\n      \"time\": \"11:00\"\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        400,
+        208
+      ],
+      "id": "ccb0ed76-40ff-4c28-9774-5dfa75eded65",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": " output.tasks",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        560,
+        16
+      ],
+      "id": "9ed9f026-0173-40f8-8353-b2c61dc9fc60",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ZrS1QZ3lJLOspMC6IyyNgUYEv0-L68qgrCP7zpUT6Vw",
+          "mode": "list",
+          "cachedResultName": "Ai Agent Task Schedular",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZrS1QZ3lJLOspMC6IyyNgUYEv0-L68qgrCP7zpUT6Vw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZrS1QZ3lJLOspMC6IyyNgUYEv0-L68qgrCP7zpUT6Vw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "time",
+              "displayName": "time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        544,
+        304
+      ],
+      "id": "cc062963-615c-449b-a748-431eb0ed2253",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dCcHFrfMcFmVjlge",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        784,
+        400
+      ],
+      "id": "f08b8232-3dbf-4575-9ee4-6d5d76a59a24",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ZrS1QZ3lJLOspMC6IyyNgUYEv0-L68qgrCP7zpUT6Vw",
+          "mode": "list",
+          "cachedResultName": "Ai Agent Task Schedular",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZrS1QZ3lJLOspMC6IyyNgUYEv0-L68qgrCP7zpUT6Vw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1008,
+        400
+      ],
+      "id": "bb90e82b-7916-44c0-a451-b6074bb80d73",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dCcHFrfMcFmVjlge",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\n\nreturn $input.all().filter(item => {\n  const date = item.json.date;\n  const time = item.json.time;\n  const status = String(item.json.status || '').trim();\n\n  if (!date || !time) return false;\n  if (status !== \"Pending\") return false;\n\n  const [hour, minute] = time.split(':');\n\n  const taskDateTime = new Date(\n    `${date}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00+05:30`\n  );\n\n  return taskDateTime <= now;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        400
+      ],
+      "id": "99b19859-aafb-4aac-8f6e-0c55a654b7ec",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "98275107-48a7-4fa1-a4d7-9a7793668ba1",
+              "name": "status",
+              "value": "Pending",
+              "type": "string"
+            },
+            {
+              "id": "84a24744-cdc5-4665-a057-29d72376d581",
+              "name": "=chat_id",
+              "value": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        784,
+        32
+      ],
+      "id": "67e28437-bece-41b2-a087-f8408834e10c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ `⏰ Reminder!\n\n📌 Task: ${$json.title}\n📅 Date: ${$json.date}\n🕐 Time: ${$json.time}\n\nDon't forget to complete it! 🚀` }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1456,
+        400
+      ],
+      "id": "e610920e-5cb7-4f24-8ffd-ddde24de825c",
+      "name": "Send a text message",
+      "webhookId": "7a34febc-0ace-4b5f-aba7-e0b4a96b6761",
+      "credentials": {
+        "telegramApi": {
+          "id": "GX1BThwlq9SMWpk4",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6cd17919-fe5d-405b-a1a4-b83a19b61c10",
+              "name": "=row_id",
+              "value": "={{ $('Code in JavaScript').item.json.row_number }}",
+              "type": "string"
+            },
+            {
+              "id": "b1744afb-5e92-4838-b87e-095eb3724489",
+              "name": "status",
+              "value": "Done",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1680,
+        400
+      ],
+      "id": "65202a9f-7840-4807-99bb-cc3de2bc19df",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ZrS1QZ3lJLOspMC6IyyNgUYEv0-L68qgrCP7zpUT6Vw",
+          "mode": "list",
+          "cachedResultName": "Ai Agent Task Schedular",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZrS1QZ3lJLOspMC6IyyNgUYEv0-L68qgrCP7zpUT6Vw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZrS1QZ3lJLOspMC6IyyNgUYEv0-L68qgrCP7zpUT6Vw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": 0,
+            "title": "={{ $('Code in JavaScript').item.json.title }}",
+            "status": "done"
+          },
+          "matchingColumns": [
+            "title"
+          ],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "time",
+              "displayName": "time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ok",
+              "displayName": "ok",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "result",
+              "displayName": "result",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1904,
+        400
+      ],
+      "id": "3f20eb09-75f1-45e5-bd58-be0a08b2fc0e",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dCcHFrfMcFmVjlge",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "dbc4fe98-da68-4eda-842a-437aca7e65a1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "120986da030daf600ffa9dd05d0935281326d3c30f62a4b4965f989daec56eb4"
+  },
+  "nodeGroups": [],
+  "id": "j3fY7wxAszwDEMNO",
+  "tags": []
+}
